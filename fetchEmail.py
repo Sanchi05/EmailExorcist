@@ -3,6 +3,7 @@ from itertools import chain
 import email
 from email import policy
 import re
+import constants as const
 
 
 imap_ssl_host = "imap.gmail.com"
@@ -69,9 +70,10 @@ def re_gex_find(pattrn,text):
     return re.search(pattrn, text)
 
 #Creating an email dictionary object
-def email_details(email_msg_, list_of_urls_extracted):
+def email_details(email_msg_, list_of_urls_extracted,uid):
     empty_email_dict = dict()
     received_headers = []
+    empty_email_dict[const.UID] = uid 
     message_Id = get_attributes("Message-ID", email_msg_)
     email_from = get_attributes("From",email_msg_)
     email_subject = get_attributes("Subject", email_msg_)
@@ -86,17 +88,19 @@ def email_details(email_msg_, list_of_urls_extracted):
         empty_email_dict["Received"] = received_headers
     else :
         empty_email_dict["Received"] = "No received from headers available"
+    empty_email_dict[const.FOUND_URLS] = list_of_urls_extracted
+    # print(empty_email_dict)
     return empty_email_dict
 
 
 # Extracting URLs
-def extract_urls_from_mail(email_message):
+def extract_urls_from_email(email_message,uid):
     try:
         if email_message.is_multipart():
             for part in email_message.walk():
                 if (part.get_content_maintype() == 'text'):
                     email_body = part.get_payload(decode=True).decode("utf-8")
-                    extracted_urls = finding_urls(email_body)
+                    extracted_urls = finding_urls(email_body,)
             for each_url in extracted_urls:
                 for url in each_url:
                     if (len(url) != 0):
@@ -104,7 +108,7 @@ def extract_urls_from_mail(email_message):
             # for url_item in urls:
             #     print("URL: ", url_item) Not needed right now. 
             #     print('\n')
-        email_details(email_message,urls)
+        email_details(email_message,urls,uid)
     except Exception as e:
         print("Error occured while trying to check if the email is multipart. Error: ",e)
 
@@ -133,7 +137,7 @@ while i < 1 :
                     email_message_list.append(email_message)
                     # print(email_message)
                     # print("======================================================")
-                    extract_urls_from_mail(email_message) 
+                    extract_urls_from_email(email_message,id) 
 
 
 
